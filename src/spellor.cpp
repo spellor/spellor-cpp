@@ -6,10 +6,7 @@
 #include <algorithm>
 using namespace std;
 
-#define endl '\n'
 typedef map<string, int> Dictionary;
-
-
 
 class spellor {
 private:
@@ -21,6 +18,10 @@ private:
 	static char _lower_and_alphabetic(char& c){
 		if(isalpha(c)) return tolower(c);
 		return '-';
+	}
+
+	static bool sort_by_second(const pair<std::string, int>& left, const pair<std::string, int>& right){
+		return left.second < right.second;
 	}
 public:
 	spellor(string _input) : _input(_input) {}
@@ -56,7 +57,53 @@ public:
 		}
 	}
 
+	string correct(const string& word){
+		vector<string> result;
+		Dictionary candidates;
+
+		if (dictionary.find(word) != dictionary.end()) { return word; }
+
+		edits(word, result);
+		known(result, candidates);
+
+		if (candidates.size() > 0) { return max_element(candidates.begin(), candidates.end(), sort_by_second)->first; }
+
+		for (unsigned int i = 0;i < result.size();i++){
+			vector<string> subResult;
+
+			edits(result[i], subResult);
+			known(subResult, candidates);
+		}
+
+		if (candidates.size() > 0) { return max_element(candidates.begin(), candidates.end(), sort_by_second)->first; }
+
+		return "";
+	}
+
+	void known(vector<string>& results, Dictionary& candidates){
+		Dictionary::iterator end = dictionary.end();
+		for(unsigned int i = 0; i < results.size(); i++){
+			Dictionary::iterator value = dictionary.find(results[i]);
+			if(value != end) candidates[value->first] = value->second;
+		}
+	}
+
+	void edits(const string& word, vector<string>& result){
+		for (string::size_type i = 0;i < word.size(); i++)    result.push_back(word.substr(0, i) + word.substr(i + 1)); //deletions
+		for (string::size_type i = 0;i < word.size() - 1;i++) result.push_back(word.substr(0, i) + word[i + 1] + word[i] + word.substr(i + 2)); //transposition
+
+		for (char j = 'a';j <= 'z';++j){
+			for (string::size_type i = 0;i < word.size(); i++)    result.push_back(word.substr(0, i) + j + word.substr(i + 1)); //alterations
+			for (string::size_type i = 0;i < word.size() + 1;i++) result.push_back(word.substr(0, i) + j + word.substr(i)); //insertion
+		}
+  	}
+
 	void output(){
 		cout << dictionary.size() << endl;
+		int i = 0;
+		for (std::map<string, int>::iterator it=dictionary.begin(); it!=dictionary.end() ; ++it){
+		    std::cout << it->first << " => " << it->second << '\n';
+		    if(i == 10) break;
+		}
 	}
 };
